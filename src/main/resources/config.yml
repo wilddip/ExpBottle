@@ -1,66 +1,164 @@
-### ExpBottle
+# ExpBottle Configuration v2.0
 
-### Translatable messages
+# Command Configuration
+command:
+  # The main command name (without the starting '/')
+  name: "exp"
+  # Aliases for the main command
+  # These are alternative names for the main command (e.g., /xp instead of /exp).
+  # Changes to aliases require a FULL PLUGIN RELOAD (e.g., using PlugMan) or SERVER RESTART.
+  # The /exp reload command DOES NOT update aliases.
+  aliases: ["xp"]
+  # --- Sound notification for /exp send --- 
+  send:
+    sound:
+      enabled: true  # Play a sound for the receiver when they get experience? (true/false)
+      # Sound name from Bukkit Sound enum: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
+      name: "ENTITY_PLAYER_LEVELUP" 
+      volume: 1.0 # Volume (0.0 to 1.0+)
+      pitch: 1.0  # Pitch (0.5 to 2.0)
+  # --- Settings for /exp get ---
+  get:
+    # What to do when the player's inventory is full when getting a bottle?
+    # Options: "error" (Show an error, don't give bottle), "drop" (Drop the bottle on the ground)
+    inventory_full_action: "drop" 
+  split:
+    min_levels_per_bottle: 10 # Minimum levels required for each bottle in /exp split
+    level_step: 1             # Levels must be a multiple of this value (1 allows any level)
 
-# If tax is disabled (like it is by default), remember to remove all %tax% and %taxprice% from the messages.
+# --- Permissions Used ---
+# expbottle.use       - Allows using the base /exp command (shows info).
+# expbottle.get       - Allows withdrawing experience using /exp get.
+# expbottle.send      - Allows sending experience using /exp send.
+# expbottle.split     - Allows splitting experience into multiple bottles using /exp split.
+# expbottle.help      - Allows viewing the help menu with /exp help.
+# expbottle.reload    - Allows reloading the plugin configuration (Console or OP by default).
+# ------------------------
 
-No Permission: '&cYou do not have the right permissions to execute this command.'
-Command Usage User: '&aUse &r/expbottle <XP/All> &ato withdraw experience. You currently have &r%playerxp% &aXP.'
-Command Usage Admin: '&aUse &r/expbottle <XP/All/Give/Reload> [Player] [XP] &ato withdraw or give XP. You currently have &r%playerxp% &aXP. There is a &r%tax%% &atax on all withdrawals.'
-Not Enough Experience: '&cYou do not have the sufficient experience. You need %taxprice% to withdraw %xp%'
-Invalid XP: '&cXP must be a number.'
-XP is more than max or less than min: '&cYou cant withdraw more than &r%maxxp% &cXP or less than &r%minxp% &cXP.'
-Successful Withdraw: '&aYou successfully withdrew &r%xp% &aXP.'
-Reload Successful: '&aYou successfully reloaded the config.'
-XP Bottle Give: '&aYou gave &r%receiverdisplayname% &aan XP Bottle with &r%xp% &aXP.'
-XP Bottle Receive: '%playerdisplayname% &agave you an XP Bottle with &r%xp% &aXP.'
-Give Yourself XP: '&aYou gave yourself an XP Bottle with &r%xp% &aXP.'
-Player Not Online: '&cSpecified player is not online.'
-Could Not Find Xp Line: '&cSomething has gone wrong, there is no line to show XP in the config. Contact an administrator.'
+# Messages Configuration
+# Use '&' for color codes.
+# 
+# --- Global Placeholders (Available everywhere) ---
+# %command%     - The actual command alias used by the player (e.g., "exp", "xp").
+# %player%      - Player's display name
+# %level%       - Player's current level
+# %total_exp%   - Player's total experience points
+# 
+# --- Bottle Lore Placeholders (Available only in `bottle_lore` list below) ---
+# %amount_xp%   - Experience points stored in the bottle.
+# %full_levels% - Full levels the stored experience represents.
+# %amount_lvl%  - Level equivalent requested by player when creating (less common now).
+# 
+# --------------------------------------------------
+messages:
+  prefix: "&7[&eExpBottle&7] "
 
-### XP Bottle informasjon
-# One of the lines in lore MUST use %xp%
-XP Bottle Name: '&aXP Bottle'
-XP Bottle Lore:
-- '&9Creator: &r%playerdisplayname%'
-- '&9XP: &a%xp%'
+  # --- General Messages ---
+  # Placeholders: Global
+  general:
+    no_permission: "&cYou don't have permission to use this command."
+    players_only: "&cThis command can only be used by players."
+    unknown_subcommand: "&cUnknown subcommand. Use /%command% help for help."
+    console_usage_hint: "&7Usage from console: /%command% reload"
+    player_not_found: "&cPlayer '&e%target%&c' not found or offline."
+    invalid_number: "&cInvalid number format: &e%input%&c."
+    positive_number: "&cAmount must be a positive number."
 
-### Throwable XP Bottle
-# If server uses any XP multiplier, it is recommended to set this to false.
-# This will consume the XP bottle and give the player the XP, and not throw the bottle.
-# Settings this to false will also disable throwing the bottle using dispensers.
-Throwable: true
+  # --- /exp --- 
+  # Placeholders: Global, %exp%, %next_level_exp%
+  info:
+    display: |-
+      &7--- Your Experience ---
+      &fLevel: &e%level%
+      &fProgress: &e%exp%&f/&e%next_level_exp% &fEXP
+      &fTotal Points: &e%total_exp%
+      &7Command Help: /%command% help
 
-### Minimum and maximum amount of XP you can withdraw to a single bottle
-Min XP: 50
-Max XP: 999999
+  # --- /exp get <levels|all> ---
+  # Placeholders: Global
+  #   In error messages: %amount_lvl%, %amount_xp%
+  get:
+    success:
+      levels: "&fSuccessfully created an experience bottle with &e%amount_xp% &fexperience points (equivalent to &e%amount_lvl% &flevels)!"
+      all: "&fSuccessfully created an experience bottle with &e%amount_xp% &fpoints!"
+      inventory_full_drop: "&eYour inventory is full! The bottle was dropped nearby."
+    error:
+      no_exp: "&cYou don't have any experience to bottle!"
+      not_enough_lvl: "&cYou don't have enough experience for &e%amount_lvl% &clevels (&e%amount_xp% &cpoints). You have: &e%total_exp% &cpoints."
+      inventory_full: "&cYour inventory is full! Cannot create experience bottle."
 
-### Tax on xp bottle
-Tax: false
-# Tax amount in decimal form, e.g 0.1 = 10%
-Tax Amount: 0.0
+  # --- /exp send <player> <levels|all> ---
+  # Placeholders: Global
+  #   General: %target%
+  #   Success/Error: %amount_lvl%, %amount_xp%, %sender%
+  send:
+    usage: "&cUsage: /%command% send <player> [level_amount|all]"
+    success:
+      levels_sender: "&fSuccessfully sent &e%amount_xp% &fpoints (equivalent to &e%amount_lvl% &flevels) to &e%target%&f!"
+      levels_target: "&fYou received &e%amount_xp% &fpoints (equivalent to &e%amount_lvl% &flevels) from &e%sender%&f!"
+      all_sender: "&fSuccessfully sent &e%amount_xp% &fpoints to &e%target%&f!"
+      all_target: "&fYou received &e%amount_xp% &fexperience points from &e%sender%&f!"
+    error:
+      cannot_self: "&cYou cannot send experience to yourself."
+      no_exp: "&cYou don't have any experience to send!"
+      not_enough_lvl: "&cYou don't have enough experience to send &e%amount_lvl% &clevels (&e%amount_xp% &cpoints). You have: &e%total_exp% &cpoints."
+      inventory_full: "&cYour inventory is full! Cannot create experience bottle."
 
-### Aliases
+  # --- /exp split <levels> ---
+  # Placeholders: Global
+  #   General: %amount_lvl%
+  #   Error: %amount_xp%, %count%, %slots_available%, %slots_required%
+  #   Success: %count%, %remaining_xp%
+  split:
+    usage: "&cUsage: /%command% split <levels_per_bottle>"
+    success:
+      base: "&aCreated &e%count%&a bottle(s) of &e%amount_lvl%&a levels each."
+      remaining: "&aRemaining experience: &e%remaining_xp%&a XP."
+    error:
+      min_levels_not_met: "&cMinimum levels per bottle is &e%min_levels%&c."
+      step_not_met: "&cLevels must be a multiple of &e%level_step%&c."
+      not_enough_exp: "&cYou don't have enough experience for even one bottle of &e%amount_lvl%&c levels (&e%amount_xp%&c XP). You have &e%total_exp%&c XP."
+      inventory_full: "&cCannot create &e%count%&c bottles. Inventory only has &e%slots_available%&c free slots. Required: &e%slots_required%&c."
 
-## Simply add a new line with a new alias e.g:
-# exampleAliases:
-# - 'alias1'
-# - 'alias2'
+  # --- /exp reload --- 
+  # Placeholders: Global
+  reload:
+    success: "&aExpBottle configuration reloaded successfully."
+    error: "&cExpBottle configuration reload failed. Check console for errors."
 
-#Aliases to the actual expbottle command
-#Reloading the config after updating commandAliases will show added aliases as red, but will still work.
-#Restarting or reloading the server will fix this.
-Command Aliases:
-- 'xpbottle'
+  # --- /exp help --- 
+  # Placeholders: Global
+  help:
+    header: "&7--- ExpBottle Command Help ---"
+    get:
+      - "&f/%command% get [level_amount|all] &7- Withdraw experience into a single bottle."
+      - "&7  [level_amount] (Optional) - Specific levels to withdraw."
+      - "&7  If none/all specified, withdraws all EXP."
+    send:
+      - "&f/%command% send <player> [level_amount|all] &7- Send experience points directly."
+      - "&7  <player> - Target player."
+      - "&7  [level_amount] (Optional) - Specific levels to send."
+      - "&7  If none/all specified, sends all EXP."
+    split:
+      - "&f/%command% split <levels_per_bottle> &7- Create multiple bottles of a fixed level size."
+      - "&7  <levels_per_bottle> - Levels in each bottle."
+    help:
+      - "&f/%command% help &7- Show this help menu."
+    reload:
+      - "&f/%command% reload &7- Reload the plugin configuration."
+    footer: "&7----------------------------------"
 
-#Aliases to the "give" function, which will give named player a specified amount of xp.
-Give Aliases:
-- 'i'
+  # --- Anvil Interaction ---
+  # Placeholders: Global
+  anvil:
+    error:
+      modify_attempt: "&cYou cannot modify this special experience bottle!"
 
-#Aliases to the "all" function, which withdraws all your xp.
-All Aliases:
-- 'everything'
+# Format for the lore (description) on the created experience bottles.
+# Use '&' for color codes.
+bottle_lore:
+  - "&7Contains &e%amount_xp% &7experience points."
+  - "&7(Equivalent to level &e%full_levels%&7)"
 
-#Aliases to the "reload" function, which reloads this config
-Reload Aliases:
-- 'rel'
+# Do not touch this value
+config_version: 3

@@ -3,52 +3,100 @@ package me.brannstroom.expbottle.model;
 import org.bukkit.entity.Player;
 
 /**
- * A utility for managing Player experience properly.
- * 
- * @author Jikoo
+ * Utility class for handling player experience calculations based on vanilla
+ * formulas.
  */
 public class Experience {
 
 	/**
-	 * Calculates a player's total exp based on level and progress to next.
-	 * @see http://minecraft.gamepedia.com/Experience#Leveling_up
+	 * Calculate a player's total experience based on level and progress to next
+	 * level.
+	 * From Essentials.
 	 * 
-	 * @param player the Player
-	 * 
-	 * @return the amount of exp the Player has
+	 * @param player Player to calculate experience for.
+	 * @return Total experience points of player.
 	 */
 	public static int getExp(Player player) {
-		return getExpFromLevel(player.getLevel())
-				+ Math.round(getExpToNext(player.getLevel()) * player.getExp());
+		return getExpFromLevel(player.getLevel()) + Math.round(getExpToNext(player.getLevel()) * player.getExp());
 	}
 
 	/**
-	 * Calculates total experience based on level.
+	 * Calculate total experience required to reach a level.
+	 * From Essentials.
 	 * 
-	 * @see http://minecraft.gamepedia.com/Experience#Leveling_up
-	 * 
-	 * "One can determine how much experience has been collected to reach a level using the equations:
-	 * 
-	 *  Total Experience = [Level]2 + 6[Level] (at levels 0-15)
-	 *                     2.5[Level]2 - 40.5[Level] + 360 (at levels 16-30)
-	 *                     4.5[Level]2 - 162.5[Level] + 2220 (at level 31+)"
-	 * 
-	 * @param level the level
-	 * 
-	 * @return the total experience calculated
+	 * @param level Level to calculate.
+	 * @return Total experience points required.
 	 */
 	public static int getExpFromLevel(int level) {
 		if (level > 30) {
 			return (int) (4.5 * level * level - 162.5 * level + 2220);
-		}
-		if (level > 15) {
+		} else if (level > 15) {
 			return (int) (2.5 * level * level - 40.5 * level + 360);
+		} else {
+			return level * level + 6 * level;
 		}
-		return level * level + 6 * level;
+	}
+
+	/**
+	 * Calculate experience points needed to progress to the next level.
+	 * From Essentials.
+	 * 
+	 * @param level Current level.
+	 * @return Experience points needed.
+	 */
+	public static int getExpToNext(int level) {
+		if (level >= 30) {
+			return 9 * level - 158;
+		} else if (level >= 15) {
+			return 5 * level - 38;
+		} else {
+			return 2 * level + 7;
+		}
+	}
+
+	/**
+	 * Change a player's experience by a given amount.
+	 * From Essentials.
+	 * 
+	 * @param player Player to modify experience for.
+	 * @param amount Amount of experience to add (or subtract if negative).
+	 */
+	public static void changeExp(Player player, int amount) {
+		int experience = getExp(player) + amount;
+		if (experience < 0) {
+			experience = 0;
+		}
+		setExp(player, experience);
+	}
+
+	/**
+	 * Set a player's total experience.
+	 * Based on Essentials but simplified.
+	 * 
+	 * @param player Player to set experience for.
+	 * @param exp    Amount of experience points.
+	 */
+	private static void setExp(Player player, int exp) {
+		player.setTotalExperience(0);
+		player.setLevel(0);
+		player.setExp(0);
+
+		if (exp > 0) {
+			player.giveExp(exp);
+		}
 	}
 
 	/**
 	 * Calculates level based on total experience.
+	 * 
+	 * @see http://minecraft.gamepedia.com/Experience#Leveling_up
+	 * 
+	 *      "One can determine how much experience has been collected to reach a
+	 *      level using the equations:
+	 * 
+	 *      Total Experience = [Level]2 + 6[Level] (at levels 0-15)
+	 *      2.5[Level]2 - 40.5[Level] + 360 (at levels 16-30)
+	 *      4.5[Level]2 - 162.5[Level] + 2220 (at level 31+)"
 	 * 
 	 * @param exp the total experience
 	 * 
@@ -66,46 +114,4 @@ public class Experience {
 		}
 		return 0;
 	}
-
-	/**
-	 * @see http://minecraft.gamepedia.com/Experience#Leveling_up
-	 * 
-	 * "The formulas for figuring out how many experience orbs you need to get to the next level are as follows:
-	 *  Experience Required = 2[Current Level] + 7 (at levels 0-15)
-	 *                        5[Current Level] - 38 (at levels 16-30)
-	 *                        9[Current Level] - 158 (at level 31+)"
-	 */
-	private static int getExpToNext(int level) {
-		if (level > 30) {
-			return 9 * level - 158;
-		}
-		if (level > 15) {
-			return 5 * level - 38;
-		}
-		return 2 * level + 7;
-	}
-
-	/**
-	 * Change a Player's exp.
-	 * <p>
-	 * This method should be used in place of {@link Player#giveExp(int)}, which does not properly
-	 * account for different levels requiring different amounts of experience.
-	 * 
-	 * @param player the Player affected
-	 * @param exp the amount of experience to add or remove
-	 */
-	public static void changeExp(Player player, int exp) {
-		exp += getExp(player);
-
-		if (exp < 0) {
-			exp = 0;
-		}
-
-		double levelAndExp = getLevelFromExp(exp);
-
-		int level = (int) levelAndExp;
-		player.setLevel(level);
-		player.setExp((float) (levelAndExp - level));
-	}
-
 }
