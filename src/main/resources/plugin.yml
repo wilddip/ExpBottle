@@ -1,5 +1,31 @@
 name: ExpBottle
-version: ${project.version}
+version: 2.0.0
 main: me.brannstroom.expbottle.ExpBottle
-api-version: 1.20
-authors: [ MiniGutt ]
+api-version: '1.21'
+authors: [wilddip, BrannStroom]
+description: Withdraw and deposit experience points using experience bottles.
+softdepend: []
+commands:
+  exp:
+    description: Main command for ExpBottle plugin.
+    usage: /<command> [get|send|split|help|reload]
+    aliases: [xp]
+permissions:
+  expbottle.use:
+    description: Allows using the base /exp command (shows info).
+    default: true
+  expbottle.get:
+    description: Allows withdrawing experience using /exp get.
+    default: true
+  expbottle.send:
+    description: Allows sending experience using /exp send.
+    default: true
+  expbottle.split:
+    description: Allows splitting experience into multiple bottles using /exp split.
+    default: true
+  expbottle.help:
+    description: Allows viewing the help menu with /exp help.
+    default: true
+  expbottle.reload:
+    description: Allows reloading the plugin configuration.
+    default: op 
