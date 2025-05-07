@@ -1,0 +1,115 @@
+prefix: "<gray>[</gray><yellow>ExpBottle</yellow><gray>] </gray>"
+
+general:
+  no_permission: "<red>You don't have permission to use this command.</red>"
+  players_only: "<red>This command can only be used by players.</red>"
+  unknown_subcommand: "<red>Unknown subcommand. Use <white>/<command> help</white> for help.</red>"
+  console_usage_hint: "<gray>Usage from console: <white>/<command> reload</white></gray>"
+  player_not_found: "<red>Player '<yellow><target></yellow><red>' not found or offline.</red>"
+  invalid_number: "<red>Invalid number format: <yellow><input></yellow><red>.</red>"
+  positive_number: "<red>Amount must be a positive number.</red>"
+  invalid_amount_format: "<red>Invalid amount format for '<yellow><input></yellow><red>'. Use numbers for XP (e.g., <yellow>100</yellow>), '<yellow>L</yellow>' for levels (e.g., <yellow>10L</yellow>), or '<yellow>all</yellow><red>'.</red>"
+
+types:
+  levels.L: "levels"
+  points: "experience points"
+
+info:
+  display:
+    - "<gray>--- Your Experience ---"
+    - "<white>Level: <yellow><level></yellow>"
+    - "<white>Progress: <yellow><exp></yellow><white>/</white><yellow><next_level_exp></yellow> <white>EXP</white>"
+    - "<white>Total Points: <yellow><total_exp></yellow>"
+    - "<gray>Command Help: <white>/<command> help</white>"
+
+get:
+  usage: "<red>Usage: <white>/<command> get [<yellow>amount</yellow><white>|</white><yellow>amountL</yellow><white>|</white><yellow>all</yellow>]</white></red>"
+  success:
+    levels: "<white>Successfully created an experience bottle with <yellow><amount_xp></yellow> experience points (equivalent to <yellow><amount_lvl></yellow> levels)!</white>"
+    all: "<white>Successfully created an experience bottle with <yellow><amount_xp></yellow> points!</white>"
+    points: "<white>Successfully withdrew <yellow><amount_xp></yellow> experience points into a bottle.</white>"
+    inventory_full_drop: "<yellow>Your inventory was full! The bottle was dropped nearby.</yellow>"
+  error:
+    no_exp: "<red>You don't have any experience to bottle!</red>"
+    not_enough_for_level: "<red>You don't have enough experience for <yellow><amount_lvl>L</yellow> (<yellow><amount_xp></yellow> points). You have: <yellow><total_exp></yellow> points.</red>"
+    not_enough_points: "<red>You don't have enough experience for <yellow><amount_xp></yellow> points. You have: <yellow><total_exp></yellow> points.</red>"
+    inventory_full: "<red>Your inventory is full! Cannot create experience bottle.</red>"
+
+send:
+  usage: "<red>Usage: <white>/<command> send <white><</white><yellow>player</yellow><white>></white> [<yellow>amount</yellow><white>|</white><yellow>amountL</yellow><white>|</white><yellow>all</yellow>]</white></red>"
+  success:
+    levels_sender: "<white>Successfully sent <yellow><amount_xp></yellow> points (equivalent to <yellow><amount_lvl></yellow> levels) to <yellow><target></yellow>!</white>"
+    levels_target: "<white>You received <yellow><amount_xp></yellow> points (equivalent to <yellow><amount_lvl></yellow> levels) from <yellow><sender></yellow>!</white>"
+    all_sender: "<white>Successfully sent <yellow><amount_xp></yellow> points to <yellow><target></yellow>!</white>"
+    all_target: "<white>You received <yellow><amount_xp></yellow> experience points from <yellow><sender></yellow>!</white>"
+  error:
+    cannot_self: "<red>You cannot send experience to yourself.</red>"
+    no_exp: "<red>You don't have any experience to send!</red>"
+    not_enough_lvl: "<red>You don't have enough experience to send <yellow><amount_lvl>L</yellow> (<yellow><amount_xp></yellow> points). You have: <yellow><total_exp></yellow> points.</red>"
+    inventory_full: "<red>Target <yellow><target></yellow>'s inventory is full. Cannot send experience bottle.</red>"
+
+split:
+  usage: "<red>Usage: <white>/<command> split <white><</white><yellow>amount</yellow><white>|</white><yellow>amountL</yellow><white>></white></white></red>"
+  success:
+    base_levels: "<green>Created <yellow><count></yellow> bottle(s) of <yellow><amount_lvl></yellow> <gray>levels</gray> each.</green>"
+    base_points: "<green>Created <yellow><count></yellow> bottle(s) of <yellow><amount_points></yellow> <gray>XP</gray> each.</green>"
+    remaining: "<green>Remaining experience: <yellow><remaining_xp></yellow> XP.</green>"
+  error:
+    min_levels_not_met: "<red>Minimum levels per bottle is <yellow><min_levels>L</yellow>.</red>"
+    step_not_met: "<red>Levels must be a multiple of <yellow><level_step></yellow>.</red>"
+    not_enough_exp: "<red>You don't have enough experience for even one bottle of <yellow><amount_lvl>L</yellow> (<yellow><amount_xp_per_bottle></yellow> XP). You have <yellow><total_exp></yellow> XP.</red>"
+    inventory_full_multi: "<red>Cannot create <yellow><count></yellow> bottles. Inventory only has <yellow><free_slots></yellow> free slots. Required: <yellow><required></yellow>.</red>"
+    min_exp_not_met: "<red>The minimum amount per bottle is <yellow><min_exp></yellow> XP (equivalent to <yellow><min_levels_equiv>L</yellow>).</red>"
+    exp_step_not_met: "<red>Amount per bottle (XP) must be a multiple of <yellow><exp_step></yellow>.</red>"
+    generic: "<red>Could not split experience. An unexpected error occurred.</red>"
+    not_enough_for_level_bottle: "<red>Not enough total XP to create even one bottle of <yellow><amount_lvl_per_bottle>L</yellow> (<yellow><amount_xp_per_bottle></yellow> XP). You have: <yellow><total_exp></yellow> XP.</red>"
+    not_enough_for_points_bottle: "<red>Not enough total XP to create even one bottle of <yellow><amount_points_per_bottle></yellow> XP. You have: <yellow><total_exp></yellow> XP.</red>"
+
+reload:
+  success: "<green>ExpBottle configuration reloaded successfully.</green>"
+  error: "<red>ExpBottle configuration reload failed. Check console for errors.</red>"
+
+help:
+  header: "<gray>--- ExpBottle Command Help ---"
+  footer: "<gray>----------------------------------</gray>"
+  get:
+    main: "<white>/<command> get [<yellow>amount</yellow><white>|</white><yellow>amountL</yellow><white>|</white><yellow>all</yellow>]</white> <gray>- Withdraw experience into a single bottle."
+    description:
+      - "<gray>  [<white><</white><yellow>amount</yellow><white>|</white><yellow>amountL</yellow><white>></white>] (Optional) - Specific XP or Levels to withdraw."
+      - "<gray>  If none/all specified, withdraws all EXP."
+  send:
+    main: "<white>/<command> send <white><</white><yellow>player</yellow><white>></white> [<yellow>amount</yellow><white>|</white><yellow>amountL</yellow><white>|</white><yellow>all</yellow>]</white> <gray>- Send experience points directly."
+    description:
+      - "<gray>  <white><</white><yellow>player</yellow><white>></white> - Target player."
+      - "<gray>  [<white><</white><yellow>amount</yellow><white>|</white><yellow>amountL</yellow><white>></white>] (Optional) - Specific XP or Levels to send."
+      - "<gray>  If none/all specified, sends all EXP."
+  split:
+    main: "<white>/<command> split <white><</white><yellow>amount</yellow><white>|</white><yellow>amountL</yellow><white>></white></white> <gray>- Create multiple bottles of a fixed size."
+    description:
+      - "<gray>  <white><</white><yellow>amount</yellow><white>|</white><yellow>amountL</yellow><white>></white> - XP or Levels in each bottle."
+  give:
+    main: "<white>/<command> give <white><</white><yellow>player</yellow><white>></white> <white><</white><yellow>amount</yellow><white>|</white><yellow>amountL</yellow><white>></white> [<white><</white><yellow>count</yellow><white>></white>]</white> <gray>- Give XP bottles."
+    description:
+      - "<gray>  <white><</white><yellow>player</yellow><white>></white> - Target player for bottles."
+      - "<gray>  <white><</white><yellow>amount</yellow><white>|</white><yellow>amountL</yellow><white>></white> - XP or Levels per bottle."
+      - "<gray>  [<white><</white><yellow>count</yellow><white>></white>] (Optional) - Number of bottles to give."
+  help:
+    main: "<white>/<command> help</white> <gray>- Show this help menu."
+  reload:
+    main: "<white>/<command> reload</white> <gray>- Reload the plugin configuration."
+
+anvil:
+  error:
+    modify_attempt: "<red>You cannot modify this special experience bottle!</red>"
+
+give:
+  usage: "<red>Usage: <white>/<command> give <white><</white><yellow>player</yellow><white>></white> <white><</white><yellow>amount</yellow><white>|</white><yellow>amountL</yellow><white>></white> [<white><</white><yellow>count</yellow><white>></white>]</white></red>"
+  error:
+    invalid_items_amount: "<red>Invalid amount of items: <yellow><input></yellow>.</red>"
+    positive_items_amount: "<red>Number of items must be positive.</red>"
+    zero_exp_per_bottle: "<red>Calculated experience per bottle is zero. Please use a larger amount.</red>"
+    target_inventory_full: "<red>Target <yellow><target></yellow>'s inventory is full. Needs <yellow><required></yellow> slots, has <yellow><available></yellow>.</red>"
+  success:
+    sender: "<green>You gave <yellow><count></yellow> bottle(s) of <yellow><amount_val></yellow> <gray><type></gray> to <yellow><target></yellow>.</green>"
+    target: "<green>You have been given <yellow><count></yellow> bottle(s) of <yellow><amount_val></yellow> <gray><type></gray>.</green>"
+    target_from_console: "<green>You have been given <yellow><count></yellow> bottle(s) of <yellow><amount_val></yellow> <gray><type></gray>.</green>" 

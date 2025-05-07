@@ -4,6 +4,8 @@ import java.util.logging.Level;
 import me.brannstroom.expbottle.ExpBottle;
 import me.brannstroom.expbottle.handlers.MessageHandler;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.ThrownExpBottle;
@@ -17,130 +19,118 @@ import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.NamespacedKey;
 import org.bukkit.projectiles.BlockProjectileSource;
-import org.bukkit.inventory.AnvilInventory;
 
 public class ExpBottleListener implements Listener {
 
+    // #region Fields
     private final ExpBottle plugin = ExpBottle.instance;
-    private final NamespacedKey experienceKey = new NamespacedKey(plugin, "experience_points");
+    private final NamespacedKey expKey = new NamespacedKey(plugin, "experience_points");
+    // #endregion
 
+    // #region Event Handlers
     @EventHandler
-    public void onExpBottle(ExpBottleEvent event) {
-        ThrownExpBottle expBottle = event.getEntity();
-        ItemStack item = expBottle.getItem();
-        if (isCustomExpBottle(item)) {
-            event.setExperience(getExperienceFromBottle(item));
-        }
+    public void onExpBottle(ExpBottleEvent e) {
+        ThrownExpBottle bottle = e.getEntity();
+        ItemStack item = bottle.getItem();
+        if (isCustom(item))
+            e.setExperience(getExp(item));
     }
 
     @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getView().getTopInventory().getHolder() instanceof AnvilInventory))
-            return;
-        if (event.getSlotType() != InventoryType.SlotType.RESULT)
-            return;
-        if (event.getCurrentItem() == null)
+    public void onInventoryClick(InventoryClickEvent e) {
+        if (!(e.getView().getTopInventory().getHolder() instanceof AnvilInventory) ||
+                e.getSlotType() != InventoryType.SlotType.RESULT ||
+                e.getCurrentItem() == null)
             return;
 
-        ItemStack itemInSlot0 = event.getView().getItem(0);
-        boolean inputIsCustom = isCustomExpBottle(itemInSlot0);
-
-        if (inputIsCustom && event.getRawSlot() == 2) {
-            event.setCancelled(true);
-            if (event.getWhoClicked() instanceof Player) {
-                MessageHandler.sendMessage((Player) event.getWhoClicked(), "anvil.error.modify_attempt");
-            }
+        if (isCustom(e.getView().getItem(0)) && e.getRawSlot() == 2) {
+            e.setCancelled(true);
+            if (e.getWhoClicked() instanceof Player)
+                MessageHandler.sendMessage((Player) e.getWhoClicked(), "anvil.error.modify_attempt");
         }
     }
 
+    @SuppressWarnings("deprecation") // modern solutions
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        ItemStack item = event.getItem();
-        if (item == null || !isCustomExpBottle(item))
+    public void onPlayerInteract(PlayerInteractEvent e) {
+        ItemStack item = e.getItem();
+        if (item == null || !isCustom(item))
             return;
 
-        Player player = event.getPlayer();
-        Action action = event.getAction();
+        Player p = e.getPlayer();
+        Action action = e.getAction();
+
+        if (action == Action.RIGHT_CLICK_BLOCK) {
+            Block clickedBlock = e.getClickedBlock();
+            if (clickedBlock != null && clickedBlock.getType().isInteractable())
+                return;
+        }
 
         if (action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK) {
-            event.setCancelled(true);
-
+            e.setCancelled(true);
             ItemStack bottleToThrow = item.clone();
             bottleToThrow.setAmount(1);
-
-            if (item.getAmount() > 1) {
+            if (item.getAmount() > 1)
                 item.setAmount(item.getAmount() - 1);
-            } else {
-                player.getInventory().setItem(event.getHand(), null);
-            }
-            player.updateInventory();
-
+            else
+                p.getInventory().setItem(e.getHand(), null);
+            p.updateInventory();
             try {
-                ThrownExpBottle thrownBottle = player.launchProjectile(ThrownExpBottle.class);
-                if (thrownBottle != null) {
+                ThrownExpBottle thrownBottle = p.launchProjectile(ThrownExpBottle.class);
+                if (thrownBottle != null)
                     thrownBottle.setItem(bottleToThrow);
-                } else {
+                else
                     plugin.getLogger().warning("Launched projectile was NULL!");
-                }
-            } catch (Exception e) {
-                plugin.getLogger().log(Level.SEVERE, "Error launching projectile!", e);
+            } catch (Exception ex) {
+                plugin.getLogger().log(Level.SEVERE, "Error launching projectile!", ex);
             }
         }
     }
 
     @EventHandler
-    public void onBlockDispense(BlockDispenseEvent event) {
-        if (event.getItem() != null && isCustomExpBottle(event.getItem())) {
-            event.setCancelled(true);
-        }
+    public void onBlockDispense(BlockDispenseEvent e) {
+        if (e.getItem() != null && isCustom(e.getItem()))
+            e.setCancelled(true);
     }
 
     @EventHandler
-    public void onProjectileLaunch(ProjectileLaunchEvent event) {
-        Projectile projectile = event.getEntity();
+    public void onProjectileLaunch(ProjectileLaunchEvent e) {
+        Projectile projectile = e.getEntity();
         if (!(projectile instanceof ThrownExpBottle))
             return;
-
         if (projectile.getShooter() instanceof BlockProjectileSource) {
-            BlockProjectileSource source = (BlockProjectileSource) projectile.getShooter();
-            if (source.getBlock().getType() == Material.DISPENSER) {
+            BlockProjectileSource src = (BlockProjectileSource) projectile.getShooter();
+            if (src.getBlock().getType() == Material.DISPENSER) {
                 ThrownExpBottle thrownBottle = (ThrownExpBottle) projectile;
-                ItemStack item = thrownBottle.getItem();
-                if (isCustomExpBottle(item)) {
-                    event.setCancelled(true);
-                }
+                if (isCustom(thrownBottle.getItem()))
+                    e.setCancelled(true);
             }
         }
     }
+    // #endregion
 
-    private boolean isCustomExpBottle(ItemStack item) {
-        if (item == null || item.getType() != Material.EXPERIENCE_BOTTLE)
-            return false;
-        if (!item.hasItemMeta())
+    // #region Utility Methods
+    private boolean isCustom(ItemStack item) {
+        if (item == null || item.getType() != Material.EXPERIENCE_BOTTLE || !item.hasItemMeta())
             return false;
         ItemMeta meta = item.getItemMeta();
-        return meta != null && meta.getPersistentDataContainer().has(experienceKey, PersistentDataType.INTEGER);
+        return meta != null && meta.getPersistentDataContainer().has(expKey, PersistentDataType.INTEGER);
     }
 
-    private int getExperienceFromBottle(ItemStack item) {
+    private int getExp(ItemStack item) {
         if (item == null || !item.hasItemMeta())
             return 0;
         ItemMeta meta = item.getItemMeta();
         if (meta == null)
             return 0;
-
-        PersistentDataContainer container = meta.getPersistentDataContainer();
-        if (container.has(experienceKey, PersistentDataType.INTEGER)) {
-            Integer value = container.get(experienceKey, PersistentDataType.INTEGER);
-            return value != null ? value : 0;
-        } else {
-            return 0;
-        }
+        PersistentDataContainer c = meta.getPersistentDataContainer();
+        return c.has(expKey, PersistentDataType.INTEGER) ? c.getOrDefault(expKey, PersistentDataType.INTEGER, 0) : 0;
     }
+    // #endregion
 }

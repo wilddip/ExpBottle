@@ -1,164 +1,130 @@
-# ExpBottle Configuration v2.0
+# ExpBottle Configuration vNext (This will be updated by the plugin if needed)
+# Plugin by YourName - Find more cool stuff at your.website!
 
-# Command Configuration
+# --- General Settings ---
+# Default language for plugin messages if a player's locale is not found or its lang file doesn't exist.
+# Should correspond to a file name in the 'plugins/ExpBottle/lang/' folder (e.g., "en_US", "ru_RU").
+default_language: "en_US"
+
+# --- Command Configuration ---
 command:
   # The main command name (without the starting '/')
+  # Example: "exp" means the command will be /exp
   name: "exp"
-  # Aliases for the main command
+
+  # Aliases for the main command.
   # These are alternative names for the main command (e.g., /xp instead of /exp).
-  # Changes to aliases require a FULL PLUGIN RELOAD (e.g., using PlugMan) or SERVER RESTART.
+  # IMPORTANT: Changes to aliases require a FULL PLUGIN RELOAD/RESTART (e.g., using PlugMan).
   # The /exp reload command DOES NOT update aliases.
   aliases: ["xp"]
-  # --- Sound notification for /exp send --- 
-  send:
-    sound:
-      enabled: true  # Play a sound for the receiver when they get experience? (true/false)
-      # Sound name from Bukkit Sound enum: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
-      name: "ENTITY_PLAYER_LEVELUP" 
-      volume: 1.0 # Volume (0.0 to 1.0+)
-      pitch: 1.0  # Pitch (0.5 to 2.0)
+
   # --- Settings for /exp get ---
   get:
     # What to do when the player's inventory is full when getting a bottle?
-    # Options: "error" (Show an error, don't give bottle), "drop" (Drop the bottle on the ground)
-    inventory_full_action: "drop" 
+    # Options:
+    #   "error" - Show an error message, and the bottle is not created.
+    #   "drop"  - Drop the bottle on the ground near the player.
+    inventory_full_action: "drop"
+
+  # --- Settings for /exp send ---
+  # `send` section no longer contains sound; it's moved to `sound_settings`
+  # send:
+
+  # --- Settings for /exp split ---
   split:
-    min_levels_per_bottle: 10 # Minimum levels required for each bottle in /exp split
-    level_step: 1             # Levels must be a multiple of this value (1 allows any level)
+    # Minimum levels required for each bottle when splitting by levels.
+    min_levels_per_bottle: 10
+    # When splitting by levels, the level amount must be a multiple of this value.
+    # Set to 1 to allow any level amount (respecting min_levels_per_bottle).
+    level_step: 1
+    # When splitting by experience points, the EXP amount must be a multiple of this value.
+    # Set to 1 to allow any EXP amount.
+    exp_step: 100 # Example: if player uses /exp split 250e, and exp_step is 100, it might be an error or adjusted.
 
-# --- Permissions Used ---
-# expbottle.use       - Allows using the base /exp command (shows info).
-# expbottle.get       - Allows withdrawing experience using /exp get.
-# expbottle.send      - Allows sending experience using /exp send.
-# expbottle.split     - Allows splitting experience into multiple bottles using /exp split.
-# expbottle.help      - Allows viewing the help menu with /exp help.
-# expbottle.reload    - Allows reloading the plugin configuration (Console or OP by default).
-# ------------------------
-
-# Messages Configuration
-# Use '&' for color codes.
-# 
-# --- Global Placeholders (Available everywhere) ---
-# %command%     - The actual command alias used by the player (e.g., "exp", "xp").
-# %player%      - Player's display name
-# %level%       - Player's current level
-# %total_exp%   - Player's total experience points
-# 
-# --- Bottle Lore Placeholders (Available only in `bottle_lore` list below) ---
-# %amount_xp%   - Experience points stored in the bottle.
-# %full_levels% - Full levels the stored experience represents.
-# %amount_lvl%  - Level equivalent requested by player when creating (less common now).
-# 
-# --------------------------------------------------
-messages:
-  prefix: "&7[&eExpBottle&7] "
-
-  # --- General Messages ---
-  # Placeholders: Global
-  general:
-    no_permission: "&cYou don't have permission to use this command."
-    players_only: "&cThis command can only be used by players."
-    unknown_subcommand: "&cUnknown subcommand. Use /%command% help for help."
-    console_usage_hint: "&7Usage from console: /%command% reload"
-    player_not_found: "&cPlayer '&e%target%&c' not found or offline."
-    invalid_number: "&cInvalid number format: &e%input%&c."
-    positive_number: "&cAmount must be a positive number."
-
-  # --- /exp --- 
-  # Placeholders: Global, %exp%, %next_level_exp%
-  info:
-    display: |-
-      &7--- Your Experience ---
-      &fLevel: &e%level%
-      &fProgress: &e%exp%&f/&e%next_level_exp% &fEXP
-      &fTotal Points: &e%total_exp%
-      &7Command Help: /%command% help
-
-  # --- /exp get <levels|all> ---
-  # Placeholders: Global
-  #   In error messages: %amount_lvl%, %amount_xp%
+# --- Sound Settings ---
+# Sound names from Bukkit Sound enum: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
+# Example: "ENTITY_ITEM_PICKUP", "BLOCK_NOTE_BLOCK_BASSDDRUM"
+sound_settings:
   get:
-    success:
-      levels: "&fSuccessfully created an experience bottle with &e%amount_xp% &fexperience points (equivalent to &e%amount_lvl% &flevels)!"
-      all: "&fSuccessfully created an experience bottle with &e%amount_xp% &fpoints!"
-      inventory_full_drop: "&eYour inventory is full! The bottle was dropped nearby."
-    error:
-      no_exp: "&cYou don't have any experience to bottle!"
-      not_enough_lvl: "&cYou don't have enough experience for &e%amount_lvl% &clevels (&e%amount_xp% &cpoints). You have: &e%total_exp% &cpoints."
-      inventory_full: "&cYour inventory is full! Cannot create experience bottle."
-
-  # --- /exp send <player> <levels|all> ---
-  # Placeholders: Global
-  #   General: %target%
-  #   Success/Error: %amount_lvl%, %amount_xp%, %sender%
-  send:
-    usage: "&cUsage: /%command% send <player> [level_amount|all]"
-    success:
-      levels_sender: "&fSuccessfully sent &e%amount_xp% &fpoints (equivalent to &e%amount_lvl% &flevels) to &e%target%&f!"
-      levels_target: "&fYou received &e%amount_xp% &fpoints (equivalent to &e%amount_lvl% &flevels) from &e%sender%&f!"
-      all_sender: "&fSuccessfully sent &e%amount_xp% &fpoints to &e%target%&f!"
-      all_target: "&fYou received &e%amount_xp% &fexperience points from &e%sender%&f!"
-    error:
-      cannot_self: "&cYou cannot send experience to yourself."
-      no_exp: "&cYou don't have any experience to send!"
-      not_enough_lvl: "&cYou don't have enough experience to send &e%amount_lvl% &clevels (&e%amount_xp% &cpoints). You have: &e%total_exp% &cpoints."
-      inventory_full: "&cYour inventory is full! Cannot create experience bottle."
-
-  # --- /exp split <levels> ---
-  # Placeholders: Global
-  #   General: %amount_lvl%
-  #   Error: %amount_xp%, %count%, %slots_available%, %slots_required%
-  #   Success: %count%, %remaining_xp%
+    enabled: true
+    name: "ENTITY_ITEM_PICKUP"
+    volume: 1.0
+    pitch: 1.0
+  send_receive: # For /exp send and /exp give (sound plays for the receiver)
+    enabled: true
+    name: "ENTITY_PLAYER_LEVELUP"
+    volume: 1.0
+    pitch: 1.0
   split:
-    usage: "&cUsage: /%command% split <levels_per_bottle>"
-    success:
-      base: "&aCreated &e%count%&a bottle(s) of &e%amount_lvl%&a levels each."
-      remaining: "&aRemaining experience: &e%remaining_xp%&a XP."
-    error:
-      min_levels_not_met: "&cMinimum levels per bottle is &e%min_levels%&c."
-      step_not_met: "&cLevels must be a multiple of &e%level_step%&c."
-      not_enough_exp: "&cYou don't have enough experience for even one bottle of &e%amount_lvl%&c levels (&e%amount_xp%&c XP). You have &e%total_exp%&c XP."
-      inventory_full: "&cCannot create &e%count%&c bottles. Inventory only has &e%slots_available%&c free slots. Required: &e%slots_required%&c."
+    enabled: true
+    name: "BLOCK_AMETHYST_BLOCK_CHIME"
+    volume: 1.0
+    pitch: 1.0
 
-  # --- /exp reload --- 
-  # Placeholders: Global
-  reload:
-    success: "&aExpBottle configuration reloaded successfully."
-    error: "&cExpBottle configuration reload failed. Check console for errors."
-
-  # --- /exp help --- 
-  # Placeholders: Global
-  help:
-    header: "&7--- ExpBottle Command Help ---"
-    get:
-      - "&f/%command% get [level_amount|all] &7- Withdraw experience into a single bottle."
-      - "&7  [level_amount] (Optional) - Specific levels to withdraw."
-      - "&7  If none/all specified, withdraws all EXP."
-    send:
-      - "&f/%command% send <player> [level_amount|all] &7- Send experience points directly."
-      - "&7  <player> - Target player."
-      - "&7  [level_amount] (Optional) - Specific levels to send."
-      - "&7  If none/all specified, sends all EXP."
-    split:
-      - "&f/%command% split <levels_per_bottle> &7- Create multiple bottles of a fixed level size."
-      - "&7  <levels_per_bottle> - Levels in each bottle."
-    help:
-      - "&f/%command% help &7- Show this help menu."
-    reload:
-      - "&f/%command% reload &7- Reload the plugin configuration."
-    footer: "&7----------------------------------"
-
-  # --- Anvil Interaction ---
-  # Placeholders: Global
-  anvil:
-    error:
-      modify_attempt: "&cYou cannot modify this special experience bottle!"
-
-# Format for the lore (description) on the created experience bottles.
-# Use '&' for color codes.
+# --- Bottle Item Configuration ---
 bottle_lore:
-  - "&7Contains &e%amount_xp% &7experience points."
-  - "&7(Equivalent to level &e%full_levels%&7)"
+  # Lore for the experience bottles. Uses MiniMessage format.
+  #
+  # Currently available placeholders (automatically filled by the plugin):
+  #   <amount_xp>    - Experience points stored in the bottle.
+  #   <full_levels>  - Approximate full levels the stored experience represents.
+  #   <player>       - Name of the player/entity that created this bottle.
+  #
+  # Example using available placeholders:
+  - "<gray>Contains <yellow><amount_xp></yellow> experience points.</gray>"
+  - "<gray>(Equivalent to level <yellow><full_levels></yellow>)"
+  - "<gray>Packed by: <white><player></white>"
+  # You can add more lines to the lore if you wish.
+  # If you extend the plugin to provide more custom placeholders for lore,
+  # you would add them to the plugin's code first, then you could use them here.
 
-# Do not touch this value
-config_version: 3
+# --- Placeholder Guide for Language Files (lang/*.yml) ---
+# The following placeholders can be used in your language files (e.g., lang/en_US.yml).
+# Remember to use them with MiniMessage syntax, e.g., <placeholder_name>.
+# These are automatically replaced by the plugin based on the context of the message.
+#
+# General & Command Context:
+#   <command>              - The command alias used by the player (e.g., "exp", "xp").
+#   <input>                - Invalid input provided by the player.
+#   <target>               - Name of the target player in commands like /exp send, /exp give.
+#   <sender>               - Name of the player sending experience or items.
+#
+# Player Experience Info (primarily for /exp info, but can be used elsewhere if contextually available):
+#   <level>                - Player's current level.
+#   <exp>                  - Player's current experience points within the current level.
+#   <next_level_exp>       - Experience points needed for the next level.
+#   <total_exp>            - Player's total accumulated experience points.
+#
+# Amounts & Values (used across various commands like get, send, split, give):
+#   <amount_xp>            - Amount specified or calculated in experience points.
+#   <amount_lvl>           - Amount specified or calculated in levels.
+#   <amount_val>           - Generic amount value (primarily for /exp give success messages).
+#   <type>                 - Type of amount (e.g., "levels", "experience points" - typically fetched from 'types' section in lang files).
+#
+# /exp split Specific:
+#   <min_levels>           - Minimum levels per bottle (from config setting command.split.min_levels_per_bottle).
+#   <min_exp>              - Minimum experience points per bottle (calculated or from future config).
+#   <min_levels_equiv>     - Level equivalent for <min_exp>.
+#   <level_step>           - Required step for level amounts (from config setting command.split.level_step).
+#   <exp_step>             - Required step for experience point amounts (from config setting command.split.exp_step).
+#   <amount_lvl_per_bottle> - Levels per bottle specified by the player for splitting.
+#   <amount_xp_per_bottle>  - Experience points per bottle (calculated from levels for splitting).
+#   <amount_points_per_bottle> - Experience points per bottle specified by the player for splitting.
+#   <count>                - Number of bottles created or to be created.
+#   <free_slots>           - Number of free inventory slots (for /exp split error messages).
+#   <amount_points>        - Points per bottle (often synonymous with <amount_points_per_bottle> in split success messages).
+#   <remaining_xp>         - Experience points remaining after splitting.
+#
+# /exp give Specific:
+#   <required>             - Number of inventory slots required for the target player.
+#   <available>            - Number of inventory slots available for the target player.
+#   (Also uses <count>, <target>, <sender>, <amount_val>, <type>)
+#
+# Note: Not all placeholders are available in every single message. Availability depends on the specific
+# command and situation. The plugin provides them where they make sense.
+# The 'types' section in your lang files (e.g., types.levels.L, types.points) is used to fill <type> for some messages.
+
+# --- Advanced Settings ---
+# Configuration version. Do not change this manually.
+# The plugin uses this to handle automatic updates to the config file structure in future versions.
+config_version: 5

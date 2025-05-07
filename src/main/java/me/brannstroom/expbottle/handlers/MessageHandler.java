@@ -2,28 +2,42 @@ package me.brannstroom.expbottle.handlers;
 
 import me.brannstroom.expbottle.ExpBottle;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class MessageHandler {
 
+    // #region Fields & Static Initializer
+    private static final ExpBottle plugin = ExpBottle.instance;
     private static FileConfiguration config;
-    private static String prefixString;
+    private static String prefixStringMiniMessage;
     private static Component prefixComponent;
     private static String commandName;
 
-    static {
-        loadMessages();
-    }
+    private static final Map<String, FileConfiguration> loadedLocales = new HashMap<>();
+    private static String defaultLocaleKey = "en_US";
+    private static FileConfiguration defaultLocaleConfig = null;
 
+    private static final MiniMessage mm = MiniMessage.miniMessage();
+
+    static {
+        loadMessageSettings();
+    }
+    // #endregion
+
+    // #region MessageContext Class
     public static class MessageContext {
         private final CommandSender sender;
+        @SuppressWarnings("unused")
         private final String commandLabel;
         private final Map<String, String> placeholders;
 
@@ -31,109 +45,162 @@ public class MessageHandler {
             this.sender = sender;
             this.commandLabel = commandLabel;
             this.placeholders = new HashMap<>();
-            
+
             if (commandLabel != null) {
-                placeholders.put("%command%", commandLabel);
+                placeholders.put("command", commandLabel);
             }
-            
+
             if (sender instanceof Player) {
-                placeholders.put("%player%", sender.getName());
+                placeholders.put("player", sender.getName());
             }
         }
 
-        public MessageContext add(String placeholder, String value) {
-            placeholders.put(placeholder, value);
+        public MessageContext add(String placeholderKey, String value) {
+            placeholders.put(placeholderKey, value);
+            return this;
+        }
+
+        public MessageContext addAll(Map<String, String> newPlaceholders) {
+            if (newPlaceholders != null) {
+                this.placeholders.putAll(newPlaceholders);
+            }
             return this;
         }
 
         public CommandSender getSender() {
             return sender;
         }
-        
+
         public String getCommandLabel() {
-            return placeholders.get("%command%");
+            return placeholders.get("command");
         }
 
         public Map<String, String> getPlaceholders() {
             return placeholders;
         }
     }
+    // #endregion
 
-    private static String getRawMessage(String path) {
-        return config.getString("messages." + path);
-    }
+    // #region Message Retrieval
+    public static String getRawMessage(CommandSender sender, String path) {
+        Object rawValue = null;
+        FileConfiguration langConfig = getLangConfigForSender(sender);
 
-    private static String getDefaultMessage(String path) {
-        switch (path) {
-            case "prefix":
-                return "&b[ExpBottle] &r";
-            case "general.no_permission":
-                return "&cYou don't have permission.";
-            case "general.players_only":
-                return "&cPlayers only.";
-            default:
-                return "&cMissing message: messages." + path;
+        if (langConfig != null) {
+            rawValue = langConfig.get(path);
         }
+
+        if (rawValue == null && defaultLocaleConfig != null) {
+            rawValue = defaultLocaleConfig.get(path);
+        }
+
+        if (rawValue == null) {
+            FileConfiguration internalEn = loadedLocales.get("en_US");
+            if (internalEn != null) {
+                rawValue = internalEn.get(path);
+            }
+        }
+
+        if (rawValue instanceof String) {
+            return (String) rawValue;
+        } else if (rawValue instanceof List) {
+            List<?> potentiallyStringList = (List<?>) rawValue;
+            if (potentiallyStringList.isEmpty()) {
+                return "";
+            }
+
+            List<String> stringList = new ArrayList<>();
+            boolean allStrings = true;
+            for (Object item : potentiallyStringList) {
+                if (item instanceof String) {
+                    stringList.add((String) item);
+                } else {
+                    allStrings = false;
+                    plugin.getLogger().warning("Non-string item found in lang path '" + path + "': " + item);
+                    break;
+                }
+            }
+
+            if (allStrings) {
+                return String.join("\n", stringList);
+            } else {
+                plugin.getLogger()
+                        .warning("Path '" + path + "' in lang file is a List but not all elements are Strings.");
+                return "<red>Invalid list content (non-string elements): " + path + "</red>";
+            }
+        }
+
+        if (rawValue != null) {
+            plugin.getLogger().warning("Path '" + path + "' in lang file is not a String or List of Strings, but: "
+                    + rawValue.getClass().getName());
+        }
+        return "<red>Missing or invalid type translation: " + path + "</red>";
     }
 
-    public static String getMessage(String path) {
-        String message = getRawMessage(path);
-        return message != null ? message : getDefaultMessage(path);
+    public static String getMessage(CommandSender sender, String path) {
+        return getRawMessage(sender, path);
     }
-    
+    // #endregion
+
+    // #region Message Sending
     public static void sendMessage(MessageContext context, String path) {
-        String message = getMessage(path);
-        message = replacePlaceholders(message, context);
-        Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(message);
-        context.getSender().sendMessage(prefixComponent.append(component));
+        CommandSender sender = context.getSender();
+        String messageString = getMessage(sender, path);
+        messageString = replacePlaceholders(messageString, context);
+        Component messageComponent = mm.deserialize(messageString);
+        Component currentPrefix = getLocalizedPrefix(sender);
+        sender.sendMessage(currentPrefix.append(messageComponent));
     }
 
     public static void sendMessage(CommandSender sender, String path, String... replacements) {
         MessageContext context = new MessageContext(sender, null);
-        
+
         if (replacements != null && replacements.length % 2 == 0) {
             for (int i = 0; i < replacements.length; i += 2) {
                 context.add(replacements[i], replacements[i + 1]);
             }
         }
-        
+
         sendMessage(context, path);
     }
-    
+
     public static void sendRawMessage(MessageContext context, String path) {
-        String message = getMessage(path);
-        message = replacePlaceholders(message, context);
-        Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(message);
-        context.getSender().sendMessage(component);
+        CommandSender sender = context.getSender();
+        String messageString = getMessage(sender, path);
+        messageString = replacePlaceholders(messageString, context);
+        Component messageComponent = mm.deserialize(messageString);
+        sender.sendMessage(messageComponent);
     }
 
     public static void sendRawMessage(CommandSender sender, String path, String... replacements) {
         MessageContext context = new MessageContext(sender, null);
-        
+
         if (replacements != null && replacements.length % 2 == 0) {
             for (int i = 0; i < replacements.length; i += 2) {
                 context.add(replacements[i], replacements[i + 1]);
             }
         }
-        
+
         sendRawMessage(context, path);
     }
+    // #endregion
 
+    // #region Message Formatting
     public static Component getFormattedMessage(String path, MessageContext context) {
-        String message = getMessage(path);
-        message = replacePlaceholders(message, context);
-        return LegacyComponentSerializer.legacyAmpersand().deserialize(message);
+        String messageString = getMessage(context.getSender(), path);
+        messageString = replacePlaceholders(messageString, context);
+        return mm.deserialize(messageString);
     }
-    
+
     public static Component getFormattedMessage(String path, CommandSender sender, String... replacements) {
         MessageContext context = new MessageContext(sender, null);
-        
+
         if (replacements != null && replacements.length % 2 == 0) {
             for (int i = 0; i < replacements.length; i += 2) {
                 context.add(replacements[i], replacements[i + 1]);
             }
         }
-        
+
         return getFormattedMessage(path, context);
     }
 
@@ -141,62 +208,106 @@ public class MessageHandler {
         if (message == null)
             return "";
 
+        String result = message;
         for (Map.Entry<String, String> entry : context.getPlaceholders().entrySet()) {
-            message = message.replace(entry.getKey(), entry.getValue());
+            result = result.replace("<" + entry.getKey() + ">", entry.getValue());
         }
-        
-        if (message.contains("%command%")) {
-            message = message.replace("%command%", commandName);
+
+        if (result.contains("%command%")) {
+            result = result.replace("%command%", commandName);
         }
-        
-        return message;
+
+        if (result.contains("<command>") && context.getPlaceholders().get("command") == null && commandName != null) {
+            result = result.replace("<command>", commandName);
+        }
+
+        return result;
+    }
+    // #endregion
+
+    // #region Locales & Config
+    public static void loadMessageSettings() {
+        config = plugin.getConfig();
+        commandName = Objects.requireNonNull(config.getString("command.name", "exp"));
+        defaultLocaleKey = config.getString("default_language", "en_US");
+
+        FileConfiguration tempDefaultLangConfig = loadedLocales.get(defaultLocaleKey);
+        if (tempDefaultLangConfig != null) {
+            prefixStringMiniMessage = tempDefaultLangConfig.getString("prefix",
+                    "<gray>[<yellow>ExpBottle</yellow>]</gray> ");
+        } else if (defaultLocaleConfig != null) {
+            prefixStringMiniMessage = defaultLocaleConfig.getString("prefix",
+                    "<gray>[<yellow>ExpBottle</yellow>]</gray> ");
+        } else {
+            prefixStringMiniMessage = "<gray>[<yellow>ExpBottle</yellow>]</gray> ";
+        }
+        prefixComponent = mm.deserialize(prefixStringMiniMessage);
+        plugin.getLogger().info("MessageHandler settings (re)loaded. Default locale: " + defaultLocaleKey
+                + ". Command: " + commandName);
     }
 
-    private static String replacePlaceholders(String message, CommandSender sender, String... replacements) {
-        if (message == null)
-            return "";
+    private static Component getLocalizedPrefix(CommandSender sender) {
+        return prefixComponent;
+    }
 
+    public static FileConfiguration getLangConfigForSender(CommandSender sender) {
+        String localeString = defaultLocaleKey;
         if (sender instanceof Player) {
-            message = message.replace("%player%", sender.getName());
-        }
-
-        if (replacements != null && replacements.length % 2 == 0) {
-            for (int i = 0; i < replacements.length; i += 2) {
-                if (replacements[i] != null && replacements[i + 1] != null) {
-                    message = message.replace(replacements[i], replacements[i + 1]);
+            Player player = (Player) sender;
+            java.util.Locale playerLocale = player.locale();
+            if (playerLocale != null) {
+                String lang = playerLocale.getLanguage();
+                String country = playerLocale.getCountry();
+                if (!country.isEmpty()) {
+                    localeString = lang + "_" + country.toUpperCase();
+                } else {
+                    localeString = lang;
                 }
             }
         }
-        
-        if (message.contains("%command%")) {
-            message = message.replace("%command%", commandName);
+        return loadedLocales.getOrDefault(localeString, defaultLocaleConfig);
+    }
+
+    public static void setDefaultLocaleConfig(FileConfiguration config) {
+        defaultLocaleConfig = config;
+        if (defaultLocaleConfig != null) {
+            prefixStringMiniMessage = defaultLocaleConfig.getString("prefix",
+                    "<gray>[<yellow>ExpBottle</yellow>]</gray> ");
+            prefixComponent = mm.deserialize(prefixStringMiniMessage);
         }
-        
-        return message;
     }
 
-    public static void loadMessages() {
-        config = ExpBottle.instance.getConfig();
-        prefixString = getMessage("prefix");
-        prefixComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(prefixString);
-        commandName = Objects.requireNonNull(config.getString("command.name", "exp"));
+    public static void addLoadedLocale(String localeKey, FileConfiguration config) {
+        loadedLocales.put(localeKey, config);
     }
 
+    public static Set<String> getLoadedLocaleKeys() {
+        return loadedLocales.keySet();
+    }
+
+    public static void clearLoadedLocales() {
+        loadedLocales.clear();
+        defaultLocaleConfig = null;
+    }
+    // #endregion
+
+    // #region Raw Text Sending
     public static void sendRawText(MessageContext context, String text) {
-        String processedText = replacePlaceholders(text, context);
-        Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(processedText);
-        context.getSender().sendMessage(component);
+        CommandSender sender = context.getSender();
+        String messageString = replacePlaceholders(text, context);
+        Component messageComponent = mm.deserialize(messageString);
+        Component currentPrefix = getLocalizedPrefix(sender);
+        sender.sendMessage(currentPrefix.append(messageComponent));
     }
 
     public static void sendRawText(CommandSender sender, String text, String... replacements) {
         MessageContext context = new MessageContext(sender, null);
-        
         if (replacements != null && replacements.length % 2 == 0) {
             for (int i = 0; i < replacements.length; i += 2) {
                 context.add(replacements[i], replacements[i + 1]);
             }
         }
-        
         sendRawText(context, text);
     }
+    // #endregion
 }

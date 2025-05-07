@@ -1,0 +1,115 @@
+prefix: "<gray>[</gray><yellow>ExpBottle</yellow><gray>] </gray>"
+
+general:
+  no_permission: "<red>У вас нет прав для использования этой команды.</red>"
+  players_only: "<red>Эта команда только для игроков.</red>"
+  unknown_subcommand: "<red>Неизвестная подкоманда. Используйте <white>/<command> help</white> для помощи.</red>"
+  console_usage_hint: "<gray>Использование из консоли: <white>/<command> reload</white></gray>"
+  player_not_found: "<red>Игрок '<yellow><target></yellow><red>' не найден или не в сети.</red>"
+  invalid_number: "<red>Неверный формат числа: <yellow><input></yellow><red>.</red>"
+  positive_number: "<red>Количество должно быть положительным числом.</red>"
+  invalid_amount_format: "<red>Неверный формат количества для '<yellow><input></yellow><red>'. Используйте числа для опыта (например, <yellow>100</yellow>), '<yellow>L</yellow>' для уровней (например, <yellow>10L</yellow>), или '<yellow>all</yellow><red>'.</red>"
+
+types:
+  levels.L: "уровней"
+  points: "опыта"
+
+info:
+  display:
+    - "<gray>--- Ваш Опыт ---"
+    - "<white>Уровень: <yellow><level></yellow>"
+    - "<white>Прогресс: <yellow><exp></yellow><white>/</white><yellow><next_level_exp></yellow> <white>ОПЫТА</white>"
+    - "<white>Всего Очков: <yellow><total_exp></yellow>"
+    - "<gray>Помощь по командам: <white>/<command> help</white>"
+
+get:
+  usage: "<red>Использование: <white>/<command> get [<yellow>кол-во</yellow><white>|</white><yellow>кол-воL</yellow><white>|</white><yellow>all</yellow>]</white></red>"
+  success:
+    levels: "<white>Успешно создана бутылка опыта с <yellow><amount_xp></yellow> очками опыта (эквивалентно <yellow><amount_lvl></yellow> уровням)!</white>"
+    all: "<white>Успешно создана бутылка опыта с <yellow><amount_xp></yellow> очками!</white>"
+    points: "<white>Успешно извлечено <yellow><amount_xp></yellow> очков опыта в бутылку.</white>"
+    inventory_full_drop: "<yellow>Ваш инвентарь полон! Бутылка была выброшена рядом.</yellow>"
+  error:
+    no_exp: "<red>У вас нет опыта для упаковки в бутылку!</red>"
+    not_enough_for_level: "<red>Недостаточно опыта для <yellow><amount_lvl>L</yellow> (<yellow><amount_xp></yellow> очков). У вас: <yellow><total_exp></yellow> очков.</red>"
+    not_enough_points: "<red>Недостаточно опыта для <yellow><amount_xp></yellow> очков. У вас: <yellow><total_exp></yellow> очков.</red>"
+    inventory_full: "<red>Ваш инвентарь полон! Невозможно создать бутылку опыта.</red>"
+
+send:
+  usage: "<red>Использование: <white>/<command> send <white><</white><yellow>игрок</yellow><white>></white> [<yellow>кол-во</yellow><white>|</white><yellow>кол-воL</yellow><white>|</white><yellow>all</yellow>]</white></red>"
+  success:
+    levels_sender: "<white>Успешно отправлено <yellow><amount_xp></yellow> очков (эквивалентно <yellow><amount_lvl></yellow> уровням) игроку <yellow><target></yellow>!</white>"
+    levels_target: "<white>Вы получили <yellow><amount_xp></yellow> очков (эквивалентно <yellow><amount_lvl></yellow> уровням) от игрока <yellow><sender></yellow>!</white>"
+    all_sender: "<white>Успешно отправлено <yellow><amount_xp></yellow> очков игроку <yellow><target></yellow>!</white>"
+    all_target: "<white>Вы получили <yellow><amount_xp></yellow> очков опыта от игрока <yellow><sender></yellow>!</white>"
+  error:
+    cannot_self: "<red>Вы не можете отправить опыт самому себе.</red>"
+    no_exp: "<red>У вас нет опыта для отправки!</red>"
+    not_enough_lvl: "<red>Недостаточно опыта для отправки <yellow><amount_lvl>L</yellow> (<yellow><amount_xp></yellow> очков). У вас: <yellow><total_exp></yellow> очков.</red>"
+    inventory_full: "<red>Инвентарь игрока <yellow><target></yellow> полон. Невозможно отправить бутылку опыта.</red>"
+
+split:
+  usage: "<red>Использование: <white>/<command> split <white><</white><yellow>кол-во</yellow><white>|</white><yellow>кол-воL</yellow><white>></white></white></red>"
+  success:
+    base_levels: "<green>Создано <yellow><count></yellow> бут. по <yellow><amount_lvl></yellow> <gray>уровней</gray> в каждой.</green>"
+    base_points: "<green>Создано <yellow><count></yellow> бут. по <yellow><amount_points></yellow> <gray>опыта</gray> в каждой.</green>"
+    remaining: "<green>Оставшийся опыт: <yellow><remaining_xp></yellow> XP.</green>"
+  error:
+    min_levels_not_met: "<red>Минимальное количество уровней на бутылку: <yellow><min_levels>L</yellow>.</red>"
+    step_not_met: "<red>Количество уровней должно быть кратно <yellow><level_step></yellow>.</red>"
+    not_enough_exp: "<red>Недостаточно опыта даже для одной бутылки на <yellow><amount_lvl>L</yellow> (<yellow><amount_xp_per_bottle></yellow> XP). У вас <yellow><total_exp></yellow> XP.</red>"
+    inventory_full_multi: "<red>Невозможно создать <yellow><count></yellow> бут. В инвентаре только <yellow><free_slots></yellow> св. слотов. Требуется: <yellow><required></yellow>.</red>"
+    min_exp_not_met: "<red>Минимальное количество на бутылку: <yellow><min_exp></yellow> опыта (эквивалентно <yellow><min_levels_equiv>L</yellow>).</red>"
+    exp_step_not_met: "<red>Количество на бутылку (опыт) должно быть кратно <yellow><exp_step></yellow>.</red>"
+    generic: "<red>Не удалось разделить опыт. Произошла непредвиденная ошибка.</red>"
+    not_enough_for_level_bottle: "<red>Недостаточно общего опыта для создания хотя бы одной бутылки на <yellow><amount_lvl_per_bottle>L</yellow> (<yellow><amount_xp_per_bottle></yellow> XP). У вас: <yellow><total_exp></yellow> XP.</red>"
+    not_enough_for_points_bottle: "<red>Недостаточно общего опыта для создания хотя бы одной бутылки на <yellow><amount_points_per_bottle></yellow> XP. У вас: <yellow><total_exp></yellow> XP.</red>"
+
+reload:
+  success: "<green>Конфигурация ExpBottle успешно перезагружена.</green>"
+  error: "<red>Ошибка перезагрузки конфигурации ExpBottle. Проверьте консоль.</red>"
+
+anvil:
+  error:
+    modify_attempt: "<red>Вы не можете изменять эту особую бутылку опыта!</red>"
+
+help:
+  header: "<gray>--- Помощь по командам ExpBottle ---"
+  footer: "<gray>----------------------------------</gray>"
+  get:
+    main: "<white>/<command> get [<yellow>кол-во</yellow><white>|</white><yellow>кол-воL</yellow><white>|</white><yellow>all</yellow>]</white> <gray>- Извлечь опыт в одну бутылку."
+    description:
+      - "<gray>  [<white><</white><yellow>кол-во</yellow><white>|</white><yellow>кол-воL</yellow><white>></white>] (Необязательно) - Конкретный опыт или уровни для извлечения."
+      - "<gray>  Если не указано или 'all', извлекается весь опыт."
+  send:
+    main: "<white>/<command> send <white><</white><yellow>игрок</yellow><white>></white> [<yellow>кол-во</yellow><white>|</white><yellow>кол-воL</yellow><white>|</white><yellow>all</yellow>]</white> <gray>- Отправить очки опыта напрямую."
+    description:
+      - "<gray>  <white><</white><yellow>игрок</yellow><white>></white> - Целевой игрок."
+      - "<gray>  [<white><</white><yellow>кол-во</yellow><white>|</white><yellow>кол-воL</yellow><white>></white>] (Необязательно) - Конкретный опыт или уровни для отправки."
+      - "<gray>  Если не указано или 'all', отправляется весь опыт."
+  split:
+    main: "<white>/<command> split <white><</white><yellow>кол-во</yellow><white>|</white><yellow>кол-воL</yellow><white>></white></white> <gray>- Создать несколько бутылок фиксированного размера."
+    description:
+      - "<gray>  <white><</white><yellow>кол-во</yellow><white>|</white><yellow>кол-воL</yellow><white>></white> - Опыт или уровни в каждой бутылке."
+  give:
+    main: "<white>/<command> give <white><</white><yellow>игрок</yellow><white>></white> <white><</white><yellow>кол-во</yellow><white>|</white><yellow>кол-воL</yellow><white>></white> [<white><</white><yellow>штук</yellow><white>></white>]</white> <gray>- Выдать бутылки с опытом."
+    description:
+      - "<gray>  <white><</white><yellow>игрок</yellow><white>></white> - Целевой игрок для бутылок."
+      - "<gray>  <white><</white><yellow>кол-во</yellow><white>|</white><yellow>кол-воL</yellow><white>></white> - Опыт или Уровни в каждой бутылке."
+      - "<gray>  [<white><</white><yellow>штук</yellow><white>></white>] (Необязательно) - Количество бутылок для выдачи."
+  help:
+    main: "<white>/<command> help</white> <gray>- Показать это меню помощи."
+  reload:
+    main: "<white>/<command> reload</white> <gray>- Перезагрузить конфигурацию плагина."
+
+give:
+  usage: "<red>Использование: <white>/<command> give <white><</white><yellow>игрок</yellow><white>></white> <white><</white><yellow>кол-во</yellow><white>|</white><yellow>кол-воL</yellow><white>></white> [<white><</white><yellow>штук</yellow><white>></white>]</white></red>"
+  error:
+    invalid_items_amount: "<red>Неверное количество предметов: <yellow><input></yellow>.</red>"
+    positive_items_amount: "<red>Количество предметов должно быть положительным.</red>"
+    zero_exp_per_bottle: "<red>Расчетный опыт на бутылку равен нулю. Пожалуйста, используйте большее количество.</red>"
+    target_inventory_full: "<red>Инвентарь игрока <yellow><target></yellow> полон. Требуется <yellow><required></yellow> слотов, доступно <yellow><available></yellow>.</red>"
+  success:
+    sender: "<green>Вы выдали <yellow><count></yellow> бут. по <yellow><amount_val></yellow> <gray><type></gray> игроку <yellow><target></yellow>.</green>"
+    target: "<green>Вам было выдано <yellow><count></yellow> бут. по <yellow><amount_val></yellow> <gray><type></gray>.</green>"
+    target_from_console: "<green>Вам было выдано <yellow><count></yellow> бут. по <yellow><amount_val></yellow> <gray><type></gray>.</green>" 
