@@ -641,6 +641,7 @@ public class ExpCommand implements CommandExecutor, TabCompleter {
         }
         int currentExp = Experience.getExp(player);
         int bottlesToCreate = currentExp / expPerBottle;
+
         if (bottlesToCreate == 0) {
             Map<String, String> p = new HashMap<>();
             p.put("amount_xp_per_bottle", String.valueOf(expPerBottle));
@@ -656,14 +657,20 @@ public class ExpCommand implements CommandExecutor, TabCompleter {
             MessageHandler.sendMessage(ctx.addAll(p), msgKey);
             return;
         }
+
         int totalExpNeeded = bottlesToCreate * expPerBottle;
         int freeSlots = getFreeInventorySlots(player);
-        if (bottlesToCreate > freeSlots) {
+
+        int requiredSlots = (bottlesToCreate + InfoKeeper.bottleMaxStackSize - 1) / InfoKeeper.bottleMaxStackSize;
+
+        if (requiredSlots > freeSlots) {
             ctx.add("count", String.valueOf(bottlesToCreate))
-                    .add("free_slots", String.valueOf(freeSlots));
+                    .add("free_slots", String.valueOf(freeSlots))
+                    .add("required", String.valueOf(requiredSlots));
             MessageHandler.sendMessage(ctx, "split.error.inventory_full_multi");
             return;
         }
+
         for (int i = 0; i < bottlesToCreate; i++) {
             createAndGiveBottle(player, expPerBottle, levelEquivForBottleDisplay, ctx, inputIsLevels);
         }
@@ -771,10 +778,13 @@ public class ExpCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        if (getFreeInventorySlots(targetPlayer) < count) {
+        int requiredSlots = (count + InfoKeeper.bottleMaxStackSize - 1) / InfoKeeper.bottleMaxStackSize;
+        int availableSlots = getFreeInventorySlots(targetPlayer);
+
+        if (availableSlots < requiredSlots) {
             ctx.add("target", targetPlayer.getName())
-                    .add("required", String.valueOf(count))
-                    .add("available", String.valueOf(getFreeInventorySlots(targetPlayer)));
+                    .add("required", String.valueOf(requiredSlots))
+                    .add("available", String.valueOf(availableSlots));
             MessageHandler.sendMessage(ctx, "give.error.target_inventory_full");
             return;
         }

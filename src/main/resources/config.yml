@@ -78,6 +78,12 @@ bottle_lore:
   # If you extend the plugin to provide more custom placeholders for lore,
   # you would add them to the plugin's code first, then you could use them here.
 
+# --- Bottle Item Stack Size ---
+# Maximum number of experience bottles that can stack in a single inventory slot.
+# Vanilla Minecraft default for experience bottles is 16.
+# Changing this might require players to re-log or for items to be re-stacked manually if they already have bottles.
+bottle_max_stack_size: 16
+
 # --- Placeholder Guide for Language Files (lang/*.yml) ---
 # The following placeholders can be used in your language files (e.g., lang/en_US.yml).
 # Remember to use them with MiniMessage syntax, e.g., <placeholder_name>.

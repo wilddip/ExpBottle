@@ -10,7 +10,7 @@ jobs:
     name: 📦 Build, GitHub Release & Modrinth Publish
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: ⬇️ Checkout code
@@ -35,9 +35,13 @@ jobs:
           echo "version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
           echo "jar_path=target/$(mvn help:evaluate -Dexpression=project.build.finalName -q -DforceStdout).jar" >> $GITHUB_OUTPUT
           echo "jar_filename=$(mvn help:evaluate -Dexpression=project.build.finalName -q -DforceStdout).jar" >> $GITHUB_OUTPUT
-          echo "tag_name=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          echo "modrinth_version_number=${{ github.ref_name#v }}" >> $GITHUB_OUTPUT
           
+          TAG_NAME_FROM_ACTION="${{ github.ref_name }}"
+          MODRINTH_VERSION_NUMBER="${TAG_NAME_FROM_ACTION#v}"
+          
+          echo "tag_name=${TAG_NAME_FROM_ACTION}" >> $GITHUB_OUTPUT
+          echo "modrinth_version_number=${MODRINTH_VERSION_NUMBER}" >> $GITHUB_OUTPUT
+
       - name: 📜 Get Changelog from Git
         id: changelog_data
         run: |
@@ -51,9 +55,6 @@ jobs:
             CHANGELOG_BODY="$TAG_MSG"
           fi
           
-          CHANGELOG_BODY="${CHANGELOG_BODY//'%'/'%25'}"
-          CHANGELOG_BODY="${CHANGELOG_BODY//$'\n'/'%0A'}"
-          CHANGELOG_BODY="${CHANGELOG_BODY//$'\r'/'%0D'}"
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo "${CHANGELOG_BODY}" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT

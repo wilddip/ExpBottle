@@ -34,6 +34,8 @@ public class InfoKeeper {
     public static int splitMinLevelsPerBottle;
     public static int splitLevelStep;
     public static int splitExpStep;
+
+    public static int bottleMaxStackSize;
     // #endregion
 
     // #region Config Loading
@@ -85,6 +87,13 @@ public class InfoKeeper {
             plugin.getLogger().warning("Invalid value for 'command.split.exp_step': '" + splitExpStep
                     + "'. Must be positive. Using default 1.");
             splitExpStep = 1;
+        }
+
+        bottleMaxStackSize = config.getInt("bottle_max_stack_size", 16);
+        if (bottleMaxStackSize <= 0 || bottleMaxStackSize > 64) {
+            plugin.getLogger().warning("Invalid value for 'bottle_max_stack_size': '" + bottleMaxStackSize
+                    + "'. Must be between 1 and 64. Using default 16.");
+            bottleMaxStackSize = 16;
         }
 
         ExpBottle.instance.getLogger().info("Loaded configuration values from config.yml");
