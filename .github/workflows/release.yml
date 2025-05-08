@@ -1,4 +1,4 @@
-name: 🚀 Build & Release ExpBottle
+name: 🚀 Build & Release
 
 on:
   push:
@@ -6,12 +6,16 @@ on:
       - 'v*.*.*'
 
 jobs:
-  build_and_release:
-    name: 📦 Build, GitHub Release & Modrinth Publish
+  build:
+    name: 🏗️ Build Project & Extract Info
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
+    outputs:
+      project_name: ${{ steps.project_info.outputs.name }}
+      project_version: ${{ steps.project_info.outputs.version }}
+      jar_path: ${{ steps.project_info.outputs.jar_path }}
+      jar_filename: ${{ steps.project_info.outputs.jar_filename }}
+      tag_name: ${{ steps.project_info.outputs.tag_name }}
+      modrinth_version_number: ${{ steps.project_info.outputs.modrinth_version_number }}
     steps:
       - name: ⬇️ Checkout code
         uses: actions/checkout@v4
@@ -42,10 +46,29 @@ jobs:
           echo "tag_name=${TAG_NAME_FROM_ACTION}" >> $GITHUB_OUTPUT
           echo "modrinth_version_number=${MODRINTH_VERSION_NUMBER}" >> $GITHUB_OUTPUT
 
+      - name: 📦 Upload JAR Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-jar
+          path: ${{ steps.project_info.outputs.jar_path }}
+
+  prepare_changelog:
+    name: 📝 Prepare Changelog
+    runs-on: ubuntu-latest
+    needs: build
+    outputs:
+      changelog_body: ${{ steps.changelog_data.outputs.changelog }}
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: 📜 Get Changelog from Git
         id: changelog_data
+        env:
+          TAG_NAME: ${{ needs.build.outputs.tag_name }}
         run: |
-          TAG_NAME="${{ steps.project_info.outputs.tag_name }}"
           TAG_MSG=$(git tag -l "${TAG_NAME}" --format='%(contents)')
           COMMIT_MSG_FULL=$(git log -1 --pretty=format:%B "${TAG_NAME}")
           
@@ -59,33 +82,65 @@ jobs:
           echo "${CHANGELOG_BODY}" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+  release:
+    name: 📦 Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build, prepare_changelog]
+    permissions:
+      contents: write
+    steps:
+      - name: ⬇️ Download JAR Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: project-jar
+          path: ./artifact
+
       - name: 📦 Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.project_info.outputs.tag_name }}
-          name: Release ${{ steps.project_info.outputs.tag_name }}
-          body: ${{ steps.changelog_data.outputs.changelog }}
+          tag_name: ${{ needs.build.outputs.tag_name }}
+          name: Release ${{ needs.build.outputs.tag_name }}
+          body: ${{ needs.prepare_changelog.outputs.changelog_body }}
           draft: false
           prerelease: false
-          files: ${{ steps.project_info.outputs.jar_path }}
+          files: ./artifact/${{ needs.build.outputs.jar_filename }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish_modrinth:
+    name: 📮 Publish to Modrinth
+    runs-on: ubuntu-latest
+    needs: [build, prepare_changelog]
+    steps:
+      - name: ⬇️ Download JAR Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: project-jar
+          path: ./artifact
 
       - name: 📮 Publish to Modrinth
         uses: cloudnode-pro/modrinth-publish@v2
         with:
           token: ${{ secrets.MODRINTH_PAT }}
           project: ${{ vars.MODRINTH_PID }}
-          name: "ExpBottle ${{ steps.project_info.outputs.modrinth_version_number }}"
-          version: ${{ steps.project_info.outputs.modrinth_version_number }}
-          changelog: ${{ steps.changelog_data.outputs.changelog }}
+          name: "ExpBottle ${{ needs.build.outputs.modrinth_version_number }}"
+          version: ${{ needs.build.outputs.modrinth_version_number }}
+          changelog: ${{ needs.prepare_changelog.outputs.changelog_body }}
           loaders: ${{ vars.MODRINTH_LABELS }}
           game-versions: ${{ vars.MODRINTH_VERSIONS }}
-          files: ${{ steps.project_info.outputs.jar_path }}
-          primary-file: ${{ steps.project_info.outputs.jar_filename }}
+          files: ./artifact/${{ needs.build.outputs.jar_filename }}
+          primary-file: ${{ needs.build.outputs.jar_filename }}
           channel: 'release'
           featured: true
           status: 'listed'
+
+  update_modrinth_readme:
+    name: 🔄 Update Modrinth Description
+    runs-on: ubuntu-latest
+    needs: publish_modrinth
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
 
       - name: 📄 Get Changed Files
         id: changed_files
@@ -109,7 +164,6 @@ jobs:
           fi
           
           echo "Updating Modrinth project body for project ID: ${PROJECT_ID}"
-          # echo "Payload: ${JSON_PAYLOAD}"
 
           curl --request PATCH \
             --url "https://api.modrinth.com/v2/project/${PROJECT_ID}" \
